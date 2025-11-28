@@ -2,164 +2,194 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Clock, Search, TrendingUp, AlertCircle } from "lucide-react";
+import { 
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend 
+} from "recharts";
+import { Clock, Search, TrendingUp, AlertCircle, MessageCircle, Share2, Eye } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-// Defined type to replace 'any'
 interface NewsTrend {
   id: string;
   title: string;
   source: string;
   time: string;
   risk: "high" | "medium" | "low" | "critical";
+  engagement: number;
 }
 
-// Mock Database of news items
 const MOCK_NEWS_DB: NewsTrend[] = [
-  { id: "1", title: "Election Commission announces new guidelines for digital campaigning", source: "Official Press", time: "2h ago", risk: "low" },
-  { id: "2", title: "Viral video claims voting machines in District 9 are malfunctioning", source: "Social Media / Twitter", time: "45m ago", risk: "high" },
-  { id: "3", title: "Deepfake detected: Candidate X appearing to endorse opponent", source: "CivicShield Agent", time: "10m ago", risk: "critical" },
-  { id: "4", title: "Voter turnout expected to reach record highs in urban areas", source: "News Daily", time: "3h ago", risk: "low" },
-  { id: "5", title: "Bot network spreading false polling dates in swing regions", source: "Network Monitor", time: "15m ago", risk: "high" },
-  { id: "6", title: "Fact Check: No, the election has not been postponed", source: "Verified Fact Checker", time: "30m ago", risk: "medium" },
+  { id: "1", title: "Election Commission announces new guidelines", source: "Official Press", time: "2h ago", risk: "low", engagement: 1540 },
+  { id: "2", title: "Viral video claims voting machines malfunction", source: "Twitter / X", time: "45m ago", risk: "high", engagement: 45200 },
+  { id: "3", title: "Deepfake: Candidate X appearing to endorse opponent", source: "CivicShield AI", time: "10m ago", risk: "critical", engagement: 1200 },
+  { id: "4", title: "Voter turnout expected to reach record highs", source: "News Daily", time: "3h ago", risk: "low", engagement: 8900 },
+  { id: "5", title: "Bot network spreading false polling dates", source: "Network Monitor", time: "15m ago", risk: "high", engagement: 23000 },
+];
+
+const PIE_DATA = [
+  { name: 'EVM Integrity', value: 400, color: '#ef4444' }, // Red
+  { name: 'Voter Fraud', value: 300, color: '#f97316' },   // Orange
+  { name: 'Political Ads', value: 300, color: '#3b82f6' }, // Blue
+  { name: 'Policy', value: 200, color: '#22c55e' },       // Green
 ];
 
 export default function PlatformTrendsPage() {
   const [query, setQuery] = useState("");
-  // Strictly typed state
   const [articles, setArticles] = useState<NewsTrend[]>(MOCK_NEWS_DB);
-  const [loading, setLoading] = useState(false);
+  
+  // Real-time chart data simulation
+  const [chartData, setChartData] = useState(PIE_DATA);
 
-  // Simulate real-time incoming news
   useEffect(() => {
     const interval = setInterval(() => {
-      const newArticle: NewsTrend = {
-        id: Date.now().toString(),
-        title: `Live Update: Monitoring system detected new activity in sector ${Math.floor(Math.random() * 100)}`,
-        source: "System Alert",
-        time: "Just now",
-        risk: Math.random() > 0.7 ? "high" : "low"
-      };
-      
-      setArticles(prev => [newArticle, ...prev].slice(0, 10)); // Keep last 10
-    }, 5000);
+      // Rotate chart data slightly to make it look live
+      setChartData(prev => prev.map(item => ({
+        ...item,
+        value: item.value + Math.floor(Math.random() * 20 - 5)
+      })));
 
+      // Add new article rarely
+      if (Math.random() > 0.8) {
+        const newArticle: NewsTrend = {
+          id: Date.now().toString(),
+          title: `ALERT: New narrative spike detected in Sector ${Math.floor(Math.random() * 5)}`,
+          source: "AI Monitor",
+          time: "Just now",
+          risk: Math.random() > 0.5 ? "high" : "medium",
+          engagement: Math.floor(Math.random() * 5000)
+        };
+        setArticles(prev => [newArticle, ...prev].slice(0, 10));
+      }
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  const handleSearch = () => {
-    setLoading(true);
-    setTimeout(() => {
-      const filtered = MOCK_NEWS_DB.filter(item => 
-        item.title.toLowerCase().includes(query.toLowerCase())
-      );
-      setArticles(filtered);
-      setLoading(false);
-    }, 500);
-  };
-
   return (
-    <div className="p-6 space-y-6 min-h-screen">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="p-2 space-y-6 min-h-screen">
+      
+      {/* Header Area */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Platform Trends</h1>
-          <p className="text-muted-foreground">
-            Live stream of election-related narratives & signals
-          </p>
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">Platform Trends</h1>
+          <p className="text-muted-foreground">Real-time narrative tracking across social graph.</p>
         </div>
-
-        <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg border border-primary/20 animate-pulse">
-          <Clock size={16} />
-          <span>Live Feed Active</span>
+        <div className="flex gap-2">
+           <Input 
+             placeholder="Search narratives..." 
+             className="w-full md:w-64 bg-background/50 backdrop-blur-sm"
+             value={query}
+             onChange={(e) => setQuery(e.target.value)}
+           />
+           <Button variant="outline"><Search size={18} /></Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Left: Feed */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="bg-background/60 backdrop-blur-lg border-border/20">
-            <CardHeader className="space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Filter trends (e.g. polling, EVM, fraud)..."
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  className="bg-background/50"
-                />
-                <Button onClick={handleSearch}>
-                  <Search size={16} />
-                </Button>
-              </div>
+          <Card className="bg-background/40 backdrop-blur-xl border-border/40">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="text-blue-500" /> Live Feed
+              </CardTitle>
+              <CardDescription>Streaming election signals from 12+ platforms</CardDescription>
             </CardHeader>
-
             <CardContent>
-              {loading ? (
-                <p className="text-center py-10 text-muted-foreground">Scanning sources...</p>
-              ) : (
-                <ul className="space-y-3">
-                  {articles.map((article) => (
-                    <motion.li
-                      layout
-                      key={article.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-start gap-4 bg-background/40 rounded-xl p-4 border border-border/10 hover:bg-background/60 transition-colors"
-                    >
-                      <div className={`mt-1 p-2 rounded-full ${
-                        article.risk === "high" || article.risk === "critical" ? "bg-red-500/20 text-red-500" : "bg-blue-500/20 text-blue-500"
-                      }`}>
-                        {article.risk === "high" || article.risk === "critical" ? <AlertCircle size={20} /> : <TrendingUp size={20} />}
+              <div className="space-y-4">
+                {articles.map((article, i) => (
+                  <motion.div
+                    layout
+                    key={article.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="group flex flex-col sm:flex-row gap-4 p-4 rounded-xl border border-border/20 bg-background/30 hover:bg-background/50 transition-all hover:border-primary/20 hover:shadow-md"
+                  >
+                    <div className={`shrink-0 mt-1 p-3 rounded-full h-fit w-fit ${
+                      article.risk === 'critical' ? 'bg-red-500/20 text-red-500 animate-pulse' : 
+                      article.risk === 'high' ? 'bg-orange-500/20 text-orange-500' : 'bg-blue-500/20 text-blue-500'
+                    }`}>
+                      {article.risk === 'critical' || article.risk === 'high' ? <AlertCircle size={24} /> : <MessageCircle size={24} />}
+                    </div>
+                    
+                    <div className="flex-1 space-y-2">
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-semibold text-base leading-tight group-hover:text-primary transition-colors">{article.title}</h3>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap flex items-center gap-1">
+                          <Clock size={12} /> {article.time}
+                        </span>
                       </div>
-
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start">
-                          <h4 className="font-semibold text-sm md:text-base pr-4">{article.title}</h4>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">{article.time}</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="outline" className="text-xs">{article.source}</Badge>
-                          {article.risk === "high" && <Badge variant="destructive" className="text-xs">High Risk</Badge>}
-                          {article.risk === "critical" && <Badge variant="destructive" className="text-xs animate-pulse">CRITICAL</Badge>}
-                        </div>
+                      
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                        <Badge variant="outline" className="bg-background/50">{article.source}</Badge>
+                        <span className="flex items-center gap-1"><Eye size={12} /> {article.engagement.toLocaleString()}</span>
+                        <span className="flex items-center gap-1"><Share2 size={12} /> {(article.engagement * 0.4).toFixed(0)}</span>
+                        
+                        {article.risk === 'critical' && <Badge variant="destructive">CRITICAL</Badge>}
                       </div>
-                    </motion.li>
-                  ))}
-                </ul>
-              )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* Right: Analytics */}
         <div className="space-y-6">
-          <Card className="bg-background/60 backdrop-blur-lg border-border/20">
+          
+          {/* Narrative Distribution Chart */}
+          <Card className="bg-background/40 backdrop-blur-xl border-border/40">
             <CardHeader>
-              <CardTitle>Narrative Analysis</CardTitle>
+              <CardTitle>Topic Distribution</CardTitle>
+              <CardDescription>Current narrative dominance</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>EVM Integrity</span>
-                  <span className="text-red-500">High Activity</span>
-                </div>
-                <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                  <div className="h-full bg-red-500 w-[75%]"></div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Voter Suppression</span>
-                  <span className="text-yellow-500">Medium</span>
-                </div>
-                <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                  <div className="h-full bg-yellow-500 w-[45%]"></div>
-                </div>
-              </div>
+            <CardContent className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip 
+                    contentStyle={{ backgroundColor: '#1a1a1a', border: 'none', borderRadius: '8px' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Legend verticalAlign="bottom" height={36}/>
+                </PieChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="bg-blue-500/10 border-blue-500/20">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-blue-500">84%</div>
+                <div className="text-xs text-blue-400/80">Sentiment Negative</div>
+              </CardContent>
+            </Card>
+            <Card className="bg-purple-500/10 border-purple-500/20">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-purple-500">12k</div>
+                <div className="text-xs text-purple-400/80">Bot Accounts</div>
+              </CardContent>
+            </Card>
+          </div>
+
         </div>
       </div>
     </div>

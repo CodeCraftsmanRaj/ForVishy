@@ -1,5 +1,7 @@
-import React, { useState, ChangeEvent } from "react";
-import { Upload, Shield, AlertTriangle, CheckCircle, Eye, Camera, FileVideo, Download, RefreshCw, Filter } from "lucide-react";
+import React, { useState, ChangeEvent, useEffect } from "react";
+import { Upload, Shield, AlertTriangle, CheckCircle, Eye, Camera, FileVideo, Download, RefreshCw, Filter, Scan, Binary } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 // Define interfaces for type safety
 interface DetectionDetails {
@@ -26,8 +28,18 @@ interface DetectionResult {
 const DeepfakePage = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [results, setResults] = useState<DetectionResult | null>(null);
+  const [scanLinePosition, setScanLinePosition] = useState(0);
 
-  // Helper to generate random analysis to simulate the agent
+  // Scanline animation effect
+  useEffect(() => {
+    if (analyzing) {
+      const interval = setInterval(() => {
+        setScanLinePosition(prev => (prev + 5) % 100);
+      }, 50);
+      return () => clearInterval(interval);
+    }
+  }, [analyzing]);
+
   const generateRandomAnalysis = (filename: string): DetectionResult => {
     const isVideo = filename.match(/\.(mp4|avi|mov)$/i);
     const rand = Math.random();
@@ -51,7 +63,6 @@ const DeepfakePage = () => {
       "Lighting inconsistency on face"
     ];
 
-    // Pick random flags if not authentic
     const flags = status !== "authentic" 
       ? flagsList.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 3) + 1)
       : [];
@@ -70,6 +81,7 @@ const DeepfakePage = () => {
         temporal: Math.floor(Math.random() * 30) + 60,
         faceAnalysis: Math.floor(Math.random() * 30) + 60,
         metadata: Math.floor(Math.random() * 30) + 60,
+        pixelAnalysis: Math.floor(Math.random() * 30) + 60,
       },
       flags: flags
     };
@@ -80,223 +92,186 @@ const DeepfakePage = () => {
     if (file) {
       setAnalyzing(true);
       setResults(null);
-      // Simulate network latency and processing
       setTimeout(() => {
         setAnalyzing(false);
         setResults(generateRandomAnalysis(file.name)); 
-      }, 2500);
+      }, 3000);
     }
   };
 
+  // Helper function to return text color class (Used in UI)
   const getStatusColor = (status: DetectionResult["status"]) => {
     switch (status) {
-      case "authentic": return "text-green-500 dark:text-green-400";
-      case "suspicious": return "text-yellow-500 dark:text-yellow-400";
-      case "deepfake": return "text-red-500 dark:text-red-400";
-      default: return "text-text-500 dark:text-text-400";
+      case "authentic": return "text-green-500";
+      case "suspicious": return "text-yellow-500";
+      case "deepfake": return "text-red-500";
+      default: return "text-gray-500";
     }
   };
 
-  const getStatusBg = (status: DetectionResult["status"]) => {
-    switch (status) {
-      case "authentic": return "bg-green-500/20 dark:bg-green-500/20";
-      case "suspicious": return "bg-yellow-500/20 dark:bg-yellow-500/20";
-      case "deepfake": return "bg-red-500/20 dark:bg-red-500/20";
-      default: return "bg-background/20 dark:bg-background/20";
-    }
-  };
-
+  // Helper function to return icon component (Used in UI)
   const getStatusIcon = (status: DetectionResult["status"]) => {
     switch (status) {
-      case "authentic": return <CheckCircle className="w-3 h-3" />;
-      case "suspicious": return <AlertTriangle className="w-3 h-3" />;
-      case "deepfake": return <Shield className="w-3 h-3" />;
-      default: return <Eye className="w-3 h-3" />;
+      case "authentic": return <CheckCircle className="w-4 h-4" />;
+      case "suspicious": return <AlertTriangle className="w-4 h-4" />;
+      case "deepfake": return <Shield className="w-4 h-4" />;
+      default: return <Eye className="w-4 h-4" />;
     }
-  };
-
-  const getConfidenceBarColor = (confidence: number) => {
-    if (confidence > 90) return "bg-red-500";
-    if (confidence > 70) return "bg-yellow-500";
-    return "bg-green-500";
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="p-4 space-y-6">
       {/* Header */}
-      <div className="px-8 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-text-900 dark:text-text-100 mb-1 mt-3">Deepfake Detector Agent</h1>
-            <p className="text-text-600 dark:text-text-400 text-sm">
-              Live Connection: <span className="text-green-500 font-mono">ONLINE</span> • Model: DeepFace-Ensemble-v4
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-background/60 backdrop-blur-lg shadow-xl border border-border/20 text-sm text-text-700 dark:text-text-300 rounded-lg hover:bg-background/80 transition-colors">
-              <RefreshCw className="w-4 h-4" />
-              Reset Agent
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-background/60 backdrop-blur-lg shadow-xl border border-border/20 text-sm text-text-700 dark:text-text-300 rounded-lg hover:bg-background/80 transition-colors">
-              <Filter className="w-4 h-4" />
-              Filter
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-background/60 backdrop-blur-lg shadow-xl border border-border/20 text-sm text-text-700 dark:text-text-300 rounded-lg hover:bg-background/80 transition-colors">
-              <Download className="w-4 h-4" />
-              Export
-            </button>
-          </div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Scan className="text-primary" /> Deepfake Forensics
+          </h1>
+          <p className="text-muted-foreground">Advanced media analysis using DeepFace Ensemble v4</p>
+        </div>
+        <div className="flex gap-2">
+          <Badge variant="outline" className="h-8 px-3 gap-2 bg-background/50">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            Engine Ready
+          </Badge>
+          <button className="flex items-center gap-2 px-3 py-1 bg-background/60 border border-border/20 text-xs rounded hover:bg-background/80 transition-colors">
+            <RefreshCw className="w-3 h-3" /> Reset
+          </button>
+          <button className="flex items-center gap-2 px-3 py-1 bg-background/60 border border-border/20 text-xs rounded hover:bg-background/80 transition-colors">
+            <Filter className="w-3 h-3" /> Filter
+          </button>
+          <button className="flex items-center gap-2 px-3 py-1 bg-background/60 border border-border/20 text-xs rounded hover:bg-background/80 transition-colors">
+            <Download className="w-3 h-3" /> Export
+          </button>
         </div>
       </div>
 
-      <div className="px-8 pb-6">
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-          {/* Upload & Analysis Section */}
-          <div className="xl:col-span-2">
-            <div className="bg-background/60 backdrop-blur-lg rounded-lg border border-border/20 p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Upload className="w-5 h-5 text-text-900 dark:text-text-100" />
-                <h2 className="text-lg font-medium text-text-900 dark:text-text-100">Media Upload & Analysis</h2>
-              </div>
-              <p className="text-sm text-text-600 dark:text-text-400 mb-4">Upload content to trigger the Deepfake Detection Agent</p>
-              
-              <div className="border-2 border-dashed border-border/20 rounded-lg p-8 text-center hover:border-primary-600 transition-colors mb-4 cursor-pointer relative">
-                <input
-                  type="file"
-                  accept="image/*,video/*"
-                  onChange={handleFileUpload}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  id="file-upload"
-                />
-                <div className="flex flex-col items-center gap-3 pointer-events-none">
-                  {analyzing ? (
-                    <RefreshCw className="w-10 h-10 text-primary-600 animate-spin" />
-                  ) : (
-                    <>
-                      <Camera className="w-10 h-10 text-text-500 dark:text-text-400" />
-                      <div>
-                        <p className="text-text-900 dark:text-text-100 font-medium mb-1">
-                          Click to upload or drag and drop
-                        </p>
-                        <p className="text-text-600 dark:text-text-400 text-sm">
-                          Images: JPG, PNG • Videos: MP4, AVI
-                        </p>
-                      </div>
-                    </>
-                  )}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Analysis Area */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="bg-black/40 backdrop-blur-xl border-dashed border-2 border-border/40 min-h-[400px] flex flex-col items-center justify-center relative overflow-hidden group hover:border-primary/50 transition-colors">
+            
+            {/* Background Grid Animation */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+
+            <input
+              type="file"
+              accept="image/*,video/*"
+              onChange={handleFileUpload}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+            />
+
+            {!analyzing && !results && (
+              <div className="text-center z-10 space-y-4">
+                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-500">
+                  <Upload className="w-10 h-10 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold">Drop Media Evidence Here</h3>
+                  <p className="text-muted-foreground text-sm mt-2">Supports MP4, AVI, JPG, PNG (Max 500MB)</p>
                 </div>
               </div>
+            )}
 
-              {analyzing && (
-                <div className="p-4 bg-background/60 backdrop-blur-lg border border-border/20 rounded-lg mb-4 space-y-2">
-                  <div className="flex items-center gap-3">
-                    <RefreshCw className="w-4 h-4 animate-spin text-primary-600" />
-                    <p className="font-medium text-text-900 dark:text-text-100 text-sm">Agent is analyzing content...</p>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
-                    <div className="bg-primary-600 h-1.5 rounded-full animate-progress" style={{width: "60%"}}></div>
-                  </div>
-                  <p className="text-xs font-mono text-text-500">
-                    {">"} Extracting frames... <br/>
-                    {">"} Running Convolutional Neural Network... <br/>
-                    {">"} Checking audio spectrum...
-                  </p>
+            {analyzing && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20">
+                <div className="w-64 h-64 border border-primary/30 relative rounded-lg overflow-hidden mb-4">
+                  {/* Scan Line */}
+                  <div 
+                    className="absolute w-full h-1 bg-primary/50 shadow-[0_0_15px_rgba(var(--primary),0.5)] z-10"
+                    style={{ top: `${scanLinePosition}%` }}
+                  />
+                  <Binary className="w-full h-full text-primary/10 p-8" />
                 </div>
-              )}
+                <div className="space-y-2 text-center">
+                  <h3 className="text-xl font-mono text-primary animate-pulse">ANALYZING ARTIFACTS...</h3>
+                  <p className="text-xs text-muted-foreground font-mono">Frame Extraction • Spectrum Analysis • GAN Detection</p>
+                </div>
+              </div>
+            )}
 
-              {results && (
-                <div className="border border-border/20 rounded-lg p-4 bg-background/60 backdrop-blur-lg animate-in fade-in slide-in-from-bottom-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      {results.type === "video" ? <FileVideo className="w-4 h-4" /> : <Camera className="w-4 h-4" />}
-                      <span className="font-medium text-text-900 dark:text-text-100 text-sm">{results.filename}</span>
-                    </div>
-                    <div className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 ${getStatusColor(results.status)} ${getStatusBg(results.status)}`}>
-                      {getStatusIcon(results.status)}
-                      {results.status.toUpperCase()}
-                    </div>
+            {results && !analyzing && (
+              <div className="absolute inset-0 bg-background/95 p-8 z-10 flex flex-col w-full">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h3 className="text-xl font-bold">{results.filename}</h3>
+                    <p className="text-sm text-muted-foreground">{results.type.toUpperCase()} • {results.uploadTime}</p>
                   </div>
+                  {/* Using getStatusColor here to prevent unused variable error */}
+                  <div className={`px-4 py-2 rounded-lg border flex items-center gap-2 ${
+                    results.status === "deepfake" ? "bg-red-500/10 border-red-500" :
+                    results.status === "suspicious" ? "bg-yellow-500/10 border-yellow-500" :
+                    "bg-green-500/10 border-green-500"
+                  } ${getStatusColor(results.status)}`}>
+                    {/* Using getStatusIcon here to prevent missing name error */}
+                    {getStatusIcon(results.status)}
+                    <span className="font-bold tracking-wider">{results.status.toUpperCase()}</span>
+                  </div>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-3 mb-3">
-                    <div>
-                      <p className="text-xs text-text-600 dark:text-text-400 mb-1">AI Confidence</p>
-                      <div className="flex items-center gap-2">
-                        <div className="text-lg font-semibold text-text-900 dark:text-text-100">{results.confidence}%</div>
-                        <div className="flex-1 bg-border/40 rounded-full h-1.5">
-                          <div 
-                            className={`h-1.5 rounded-full ${getConfidenceBarColor(results.confidence)}`}
-                            style={{ width: `${results.confidence}%` }}
-                          ></div>
-                        </div>
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  {Object.entries(results.details).map(([key, value]) => (
+                    <div key={key} className="space-y-1">
+                      <div className="flex justify-between text-xs uppercase text-muted-foreground">
+                        <span>{key.replace(/([A-Z])/g, " $1")}</span>
+                        <span>{value}%</span>
+                      </div>
+                      <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full ${value! > 80 ? "bg-red-500" : "bg-primary"}`} 
+                          style={{ width: `${value}%` }}
+                        />
                       </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-text-600 dark:text-text-400 mb-1">Upload Time</p>
-                      <p className="text-xs text-text-900 dark:text-text-100">{results.uploadTime}</p>
-                    </div>
-                  </div>
-
-                  <div className="mb-3">
-                    <p className="text-xs text-text-600 dark:text-text-400 mb-2">Vector Analysis Details</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {Object.entries(results.details).map(([key, value]) => (
-                        <div key={key} className="bg-background/40 p-2 rounded border border-border/10">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="text-xs text-text-600 dark:text-text-400 capitalize">{key.replace(/([A-Z])/g, " $1")}</span>
-                            <span className="text-xs font-medium text-text-900 dark:text-text-100">{value}%</span>
-                          </div>
-                          <div className="w-full bg-border/40 rounded-full h-1">
-                            <div 
-                              className={`h-1 rounded-full ${value && value > 90 ? "bg-red-500" : value && value > 70 ? "bg-yellow-500" : "bg-green-500"}`}
-                              style={{ width: `${value}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {results.flags.length > 0 && (
-                    <div>
-                      <p className="text-xs text-text-600 dark:text-text-400 mb-2">Agent Flags</p>
-                      <div className="space-y-1">
-                        {results.flags.map((flag, index) => (
-                          <div key={index} className="flex items-center gap-2 text-xs bg-red-500/10 text-red-500 dark:text-red-400 p-2 rounded border border-red-500/20">
-                            <AlertTriangle className="w-3 h-3" />
-                            {flag}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  ))}
                 </div>
-              )}
+
+                <div className="mt-auto">
+                  <h4 className="text-sm font-semibold mb-2">Detection Flags</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {results.flags.length > 0 ? results.flags.map((flag, i) => (
+                      <Badge key={i} variant="destructive" className="bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20">
+                        {flag}
+                      </Badge>
+                    )) : (
+                      <Badge variant="outline" className="text-green-500 border-green-500/20">No Anomalies Detected</Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </Card>
+        </div>
+
+        {/* Right Sidebar: History & Stats */}
+        <div className="space-y-6">
+          <Card className="bg-background/40 backdrop-blur-xl border-border/40 p-6">
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <Eye size={16} /> Live Detection Feed
+            </h3>
+            <div className="space-y-4">
+              {[1,2,3].map((_, i) => (
+                <div key={i} className="flex gap-3 items-center p-3 rounded-lg bg-background/50 border border-border/20">
+                  <div className={`w-2 h-2 rounded-full ${i === 0 ? "bg-red-500" : "bg-green-500"}`} />
+                  <div className="flex-1 overflow-hidden">
+                    <p className="text-sm font-medium truncate">vid_evidence_{2492 + i}.mp4</p>
+                    <p className="text-xs text-muted-foreground">{i === 0 ? "Deepfake (98%)" : "Authentic"}</p>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{i * 5}m ago</span>
+                </div>
+              ))}
             </div>
-          </div>
+          </Card>
 
-          {/* Detection Stats */}
-          <div className="xl:col-span-1">
-            <div className="bg-background/60 backdrop-blur-lg rounded-lg border border-border/20 p-5 mb-5">
-              <h2 className="text-lg font-medium text-text-900 dark:text-text-100 mb-4">Live Agent Stats</h2>
-              
-              <div className="space-y-3">
-                <div className="p-3 bg-background/40 rounded border border-border/20">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-text-900 dark:text-text-100 font-medium text-sm">Queue Status</span>
-                    <span className="text-xs text-green-500 animate-pulse">Processing</span>
-                  </div>
-                  <div className="text-xs text-text-500">3 files pending analysis</div>
-                </div>
-
-                <div className="p-3 bg-background/60 backdrop-blur-lg rounded border border-border/20">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-text-900 dark:text-text-100 font-medium text-sm">Total Deepfakes</span>
-                    <span className="text-xl font-semibold text-text-900 dark:text-text-100">24</span>
-                  </div>
-                  <div className="text-xs text-red-500">+1 detected just now</div>
-                </div>
-              </div>
-            </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="bg-background/40 border-border/40 p-4 text-center">
+              <div className="text-2xl font-bold text-primary">1.2s</div>
+              <div className="text-xs text-muted-foreground">Avg Latency</div>
+            </Card>
+            <Card className="bg-background/40 border-border/40 p-4 text-center">
+              <div className="text-2xl font-bold text-primary">99.4%</div>
+              <div className="text-xs text-muted-foreground">Accuracy</div>
+            </Card>
           </div>
         </div>
       </div>
