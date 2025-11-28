@@ -113,7 +113,8 @@ export default function DashboardLayout() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-background-100 to-background-50 dark:from-background-900 dark:to-background-800">
+      {/* Updated gradient syntax for Tailwind v4 */}
+      <div className="flex min-h-screen w-full bg-linear-to-br from-background-100 to-background-50 dark:from-background-900 dark:to-background-800">
         <Sidebar className="border-r border-white bg-background/30 backdrop-blur-xl">
           <SidebarHeader className="p-6">
             <motion.div
@@ -121,7 +122,8 @@ export default function DashboardLayout() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <span className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text">
+              {/* Updated gradient syntax */}
+              <span className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary-600 to-accent-600 bg-clip-text">
                 CivicShield AI
               </span>
             </motion.div>
@@ -215,7 +217,8 @@ export default function DashboardLayout() {
               whileHover={{ scale: 1.02 }}
             >
               <Avatar>
-                <AvatarImage src="/avatar.png" />
+                {/* Fixed 404 by using a dynamic placeholder service */}
+                <AvatarImage src="https://ui-avatars.com/api/?name=Civic+Shield&background=0D8ABC&color=fff" />
                 <AvatarFallback className="bg-primary-100 text-primary-700">CS</AvatarFallback>
               </Avatar>
               <div>

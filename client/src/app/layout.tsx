@@ -35,7 +35,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-br from-background-50 to-background-100 dark:from-background-900 dark:to-background-800`}
+        // Changed to bg-linear-to-br for Tailwind v4 compatibility
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-linear-to-br from-background-50 to-background-100 dark:from-background-900 dark:to-background-800`}
       >
         <ThemeProvider
           defaultTheme="dark"
